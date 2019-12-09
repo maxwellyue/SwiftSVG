@@ -16,12 +16,7 @@ let package = Package(
             name: "SwiftSVG",
             dependencies: [],
             path: "SwiftSVG"
-        ),
-        .testTarget(
-            name: "SwiftSVGTests",
-            dependencies: ["SwiftSVG"],
-            path: "SwiftSVGTests"
-        ),
+        )
     ],
     swiftLanguageVersions: [.v5]
 )
