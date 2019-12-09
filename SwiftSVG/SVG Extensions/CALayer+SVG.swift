@@ -38,6 +38,8 @@
  If you choose to use these initializers, it is assumed that you would like to exercise a higher level of control. As such, you must provide a completion block and then add the passed `SVGLayer` to the layer of your choosing. Use the UIView extensions if you prefer the easier to use one-liner initializers.
  */
 public extension CALayer {
+    
+    @discardableResult
     convenience init(svg: String, completion: @escaping (SVGLayer) -> Void) {
         self.init()
 
