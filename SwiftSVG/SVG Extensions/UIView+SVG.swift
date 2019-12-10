@@ -26,21 +26,17 @@
 //  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 //  THE SOFTWARE.
 
-
-
 import Foundation
 #if os(iOS) || os(tvOS)
-import UIKit
+    import UIKit
 #elseif os(OSX)
-import AppKit
+    import AppKit
 #endif
-
 
 /**
  A set of convenience initializers that create new `UIView` instances from SVG data
  */
 public extension UIView {
-    
     /**
      Convenience initializer that instantiates a new `UIView` instance with a single path `d` string. The path will be parsed synchronously.
      ```
@@ -54,12 +50,12 @@ public extension UIView {
         let pathPath = UIBezierPath(pathString: pathString)
         svgLayer.path = pathPath.cgPath
         #if os(iOS) || os(tvOS)
-        self.layer.addSublayer(svgLayer)
+            layer.addSublayer(svgLayer)
         #elseif os(OSX)
-        self.nonOptionalLayer.addSublayer(svgLayer)
+            nonOptionalLayer.addSublayer(svgLayer)
         #endif
     }
-    
+
     /**
      Convenience initializer that instantiates a new `UIView` for the given SVG file in the main bundle
      ```
@@ -69,23 +65,21 @@ public extension UIView {
      - Parameter parser: The optional parser to use to parse the SVG file
      - Parameter completion: A required completion block to execute once the SVG has completed parsing. The passed `SVGLayer` will be added to this view's sublayers before executing the completion block
      */
-    convenience init(svgNamed: String, parser: SVGParser? = nil, completion: ((SVGLayer) -> ())? = nil) {
-        
+    convenience init(svgNamed: String, parser: SVGParser? = nil, completion: ((SVGLayer) -> Void)? = nil) {
         // TODO: This is too many guards to really make any sense. Also approaching on the
         // pyramid of death Refactor this at some point to be able to work cross-platform.
         if #available(iOS 9.0, OSX 10.11, *) {
-            
             var data: Data?
             #if os(iOS)
-            if let asset = NSDataAsset(name: svgNamed) {
-                data = asset.data
-            }
+                if let asset = NSDataAsset(name: svgNamed) {
+                    data = asset.data
+                }
             #elseif os(OSX)
-            if let asset = NSDataAsset(name: NSDataAsset.Name(svgNamed)) {
-                data = asset.data
-            }
+                if let asset = NSDataAsset(name: NSDataAsset.Name(svgNamed)) {
+                    data = asset.data
+                }
             #endif
-            
+
             guard let unwrapped = data else {
                 guard let svgURL = Bundle.main.url(forResource: svgNamed, withExtension: "svg") else {
                     self.init()
@@ -115,16 +109,16 @@ public extension UIView {
             }
         }
     }
-    
+
     /// :nodoc:
     @available(*, deprecated, renamed: "init(svgNamed:parser:completion:)")
-    convenience init(SVGNamed: String, parser: SVGParser? = nil, completion: ((SVGLayer) -> ())? = nil) {
+    convenience init(SVGNamed: String, parser: SVGParser? = nil, completion: ((SVGLayer) -> Void)? = nil) {
         self.init(svgNamed: SVGNamed, parser: parser, completion: completion)
     }
-    
+
     /**
      Convenience initializer that instantiates a new `UIView` instance for the given SVG file at the given URL
-     
+
      Upon completion, it will resize the layer to aspect fit this view's superview
      ```
      let view = UIView(svgURL: "hawaiiFlowers", parser: aParser) { (svgLayer) in
@@ -135,7 +129,7 @@ public extension UIView {
      - Parameter parser: The optional parser to use to parse the SVG file
      - Parameter completion: A required completion block to execute once the SVG has completed parsing. The passed `SVGLayer` will be added to this view's sublayers before executing the completion block
      */
-    convenience init(svgURL: URL, parser: SVGParser? = nil, completion: ((SVGLayer) -> ())? = nil) {
+    convenience init(svgURL: URL, parser: SVGParser? = nil, completion: ((SVGLayer) -> Void)? = nil) {
         do {
             let svgData = try Data(contentsOf: svgURL)
             self.init(svgData: svgData, parser: parser, completion: completion)
@@ -144,16 +138,16 @@ public extension UIView {
             Swift.print("No data at URL: \(svgURL)")
         }
     }
-    
+
     /// :nodoc:
     @available(*, deprecated, renamed: "init(svgURL:parser:completion:)")
-    convenience init(SVGURL: URL, parser: SVGParser? = nil, completion: ((SVGLayer) -> ())? = nil) {
+    convenience init(SVGURL: URL, parser: SVGParser? = nil, completion: ((SVGLayer) -> Void)? = nil) {
         self.init(svgURL: SVGURL, parser: parser, completion: completion)
     }
-	
+
     /**
      Convenience initializer that instantiates a new `UIView` instance with the given SVG data
-     
+
      Upon completion, it will resize the layer to aspect fit this view's superview
      ```
      let view = UIView(svgData: svgData)
@@ -162,21 +156,31 @@ public extension UIView {
      - Parameter parser: The optional parser to use to parse the SVG file
      - Parameter completion: A required completion block to execute once the SVG has completed parsing. The passed `SVGLayer` will be added to this view's sublayers before executing the completion block
      */
-    convenience init(svgData: Data, parser: SVGParser? = nil, completion: ((SVGLayer) -> ())? = nil) {
-		self.init()
-        
-        CALayer(svgData: svgData, parser: parser) { [weak self] (svgLayer) in
+    convenience init(svgData: Data, parser: SVGParser? = nil, completion: ((SVGLayer) -> Void)? = nil) {
+        self.init()
+
+        CALayer(svgData: svgData, parser: parser) { [weak self] svgLayer in
             DispatchQueue.main.safeAsync {
                 self?.nonOptionalLayer.addSublayer(svgLayer)
             }
             completion?(svgLayer)
         }
-	}
-    
+    }
+
+    convenience init(svgString: String, completion: ((SVGLayer) -> Void)? = nil) {
+        self.init()
+
+        CALayer(svg: svgString) { [weak self] svgLayer in
+            completion?(svgLayer)
+            DispatchQueue.main.safeAsync {
+                self?.nonOptionalLayer.addSublayer(svgLayer)
+            }
+        }
+    }
+
     /// :nodoc:
     @available(*, deprecated, renamed: "init(svgData:parser:completion:)")
-    convenience init(SVGData svgData: Data, parser: SVGParser? = nil, completion: ((SVGLayer) -> ())? = nil) {
+    convenience init(SVGData svgData: Data, parser: SVGParser? = nil, completion: ((SVGLayer) -> Void)? = nil) {
         self.init(svgData: svgData, parser: parser, completion: completion)
     }
-    
 }
